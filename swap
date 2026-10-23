@@ -1,0 +1,25 @@
+# Swapping of numbers
+
+# a = int(input("Enter first number: "))
+# b = int(input("Enter second number: "))
+
+# print(f"Before swapping: a = {a}, b = {b}")
+
+# a, b = b, a
+
+# print(f"After swapping: a = {a}, b = {b}")
+# make a function to check a number is prime or not.
+# def is_prime(n):
+#     if n < 2:
+#         return False
+#     for i in range(2, int(n ** 0.5) + 1):
+#         if n % i == 0:
+#             return False
+#     return True
+# # Take two numbers from user and check if they are prime or not
+# a = int(input("Enter first number: "))
+# b = int(input("Enter second number: "))
+
+# print(f"Is {a} prime? {is_prime(a)}")
+# print(f"Is {b} prime? {is_prime(b)}")
+

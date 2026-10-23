@@ -1,0 +1,105 @@
+# Python program to accept marks for five students
+# Validates each mark between 0 and 100
+# Calculates grades using specified grade boundaries
+# Handles invalid input and prints a formatted report
+# Includes comments and boundary-value test cases
+
+# Grade boundaries used in the program
+# 90-100 -> A, 80-89 -> B, 70-79 -> C, 60-69 -> D, 0-59 -> F
+# Any value outside 0..100 is invalid and rejected.
+
+
+def calculate_grade(mark):
+    """Return the grade for a valid mark."""
+    if 90 <= mark <= 100:
+        return "A"
+    elif 80 <= mark <= 89:
+        return "B"
+    elif 70 <= mark <= 79:
+        return "C"
+    elif 60 <= mark <= 69:
+        return "D"
+    elif 0 <= mark <= 59:
+        return "F"
+    else:
+        return "Invalid"  # This case should not happen after validation
+
+
+def validate_mark(value):
+    """Validate a mark is a number between 0 and 100."""
+    try:
+        mark = float(value)
+    except ValueError:
+        return False, "Invalid input: enter a numeric value."
+
+    if mark < 0 or mark > 100:
+        return False, "Invalid input: mark must be between 0 and 100."
+
+    return True, mark
+
+
+def input_marks_for_students():
+    """Input marks for exactly five students and return a list."""
+    marks = []
+
+    for i in range(1, 6):
+        while True:
+            user_input = input(f"Enter mark for student {i}: ")
+            valid, result = validate_mark(user_input)
+
+            if valid:
+                marks.append(result)
+                break
+            else:
+                print(result)
+                # Keep asking until a valid mark is entered
+
+    return marks
+
+
+def display_report(student_marks):
+    """Display a formatted grade report for each student."""
+    print("\nStudent Mark Report")
+    print("-" * 40)
+    print(f"{'Student':<8}{'Mark':>8}{'Grade':>10}")
+    print("-" * 40)
+
+    for index, mark in enumerate(student_marks, start=1):
+        grade = calculate_grade(mark)
+        print(f"{index:<8}{mark:>8.1f}{grade:>10}")
+
+    print("-" * 40)
+
+
+# Boundary value test cases
+# These are examples to verify the validation rules.
+# Valid boundaries: 0, 1, 59, 60, 69, 70, 79, 80, 89, 90, 100
+# Invalid boundaries: -1, 101, and non-numeric input such as 'abc'
+
+def run_boundary_tests():
+    """Test boundary values for validation and grading logic."""
+    boundary_values = [0, 1, 59, 60, 69, 70, 79, 80, 89, 90, 100, -1, 101, "abc"]
+
+    print("\nBoundary Test Cases")
+    print("-" * 40)
+
+    for value in boundary_values:
+        valid, result = validate_mark(value)
+        if valid:
+            print(f"{value!r} -> valid, grade = {calculate_grade(result)}")
+        else:
+            print(f"{value!r} -> {result}")
+
+    print("-" * 40)
+
+
+# Main program
+if __name__ == "__main__":
+    # Test boundary values first
+    run_boundary_tests()
+
+    # Collect marks from five students
+    student_marks = input_marks_for_students()
+
+    # Display formatted report
+    display_report(student_marks)

@@ -1,0 +1,139 @@
+Student Task Management System — Requirements Engineering (Exercise 3.1)
+
+Scope and assumptions
+The system supports students maintaining academic tasks. No authentication, task sharing, notifications, recurrence, sorting, or integrations are specified; they are not included as requirements. The scenario does not define validation rules, field optionality, or permitted priority values; these need stakeholder decisions.
+
+Functional requirements
+FR-01 Create task: The system shall allow a student to create a task with a title, description, due date, priority, and completion status, subject to agreed validation rules.
+FR-02 View tasks: The system shall allow a student to view their task list and the details of a selected task.
+FR-03 Update task: The system shall allow a student to update a task's title, description, due date, priority, and completion status.
+FR-04 Delete task: The system shall allow a student to delete a selected task.
+FR-05 Persist tasks: The system shall save task changes so that they remain available in subsequent use. Storage and retention specifics are undecided.
+
+Non-functional requirements
+NFR-01 Usability: CRUD actions and feedback shall be understandable to students without specialized training.
+NFR-02 Data integrity: A failed save or delete shall not silently leave task data in an ambiguous or partially updated state.
+NFR-03 Responsiveness: The system should provide feedback for user actions and errors; response-time targets require agreement.
+NFR-04 Reliability: Successfully saved tasks should remain available after an ordinary application restart; recovery targets require agreement.
+NFR-05 Privacy: Task data should be available only to its intended student if the application supports multiple students. User identification and access-control mechanisms are unspecified.
+NFR-06 Accessibility: The interface should support keyboard operation and assistive technologies; the required conformance level is undecided.
+
+User stories
+1. As a student, I want to create a task so that I can record academic work I need to complete.
+2. As a student, I want to view my task list so that I can review my workload.
+3. As a student, I want to view an individual task's details so that I can check its due date, priority, and status.
+4. As a student, I want to update task information so that my list reflects changes in my plans.
+5. As a student, I want to change a task's completion status so that I can track my progress.
+6. As a student, I want to delete an obsolete task so that it no longer appears in my list.
+
+Acceptance criteria — CRUD
+
+Create
+- Given valid values under the agreed rules, when the student saves a task, then the task is saved with those values and appears in the task list.
+- Given a required value is missing or invalid, when the student saves, then no task is created and the issue is identified for correction.
+- After a successful save, the system confirms creation.
+
+Read / view
+- Given saved tasks exist, when the student opens the list, then the tasks are displayed with at least their titles and completion statuses.
+- When the student selects a task, then its title, description, due date, priority, and completion status are displayed.
+- Given there are no saved tasks, when the list is opened, then an empty state is displayed rather than an error.
+
+Update
+- Given a saved task, when the student changes one or more fields and saves valid values, then the changes are displayed in the list and task details.
+- Given invalid values, when the student attempts to save, then the update is rejected, the existing task remains unchanged, and the issue is identified.
+- When the student updates completion status and saves, then the displayed status reflects the change.
+
+Delete
+- Given a saved task, when the student selects delete and confirms, then the task is removed and is no longer available in the list.
+- When the student cancels deletion, then the task remains unchanged.
+- If deletion fails, then the task remains available and the system reports the failure.
+
+Edge cases
+- Empty, whitespace-only, duplicate, or unusually long titles; empty or very long descriptions.
+- Missing or malformed due date; past dates; date/time-zone boundary behavior.
+- Missing or unsupported priority; invalid completion status.
+- Updating or deleting a task that was already removed or is otherwise unavailable.
+- Empty list, large list, and concurrent edits from multiple sessions or devices.
+- Interrupted saves/deletions or storage failures; verify existing data is not silently lost.
+
+Unanswered questions
+- Is this a single-student application or a multi-student service? How is task ownership handled? Authentication is not assumed.
+- Which fields are mandatory, and what are the length limits and validation rules?
+- What priority options and default are required? Is completion a Boolean or a set of statuses?
+- Are past due dates allowed? Are due dates date-only or time-specific, and what time zone applies?
+- Should deletion be permanent, recoverable, or confirmed? What should happen when a task is unavailable during an edit?
+- Are list sorting, search, or filtering required? They are not in the stated scope.
+- What are the platform, persistence, data retention, performance, availability, privacy, and accessibility targets?
+- Are sharing, reminders, recurring tasks, or calendar/LMS integrations desired? These require explicit approval and are not assumed.
+- Are sharing, reminders, recurring tasks, or calendar/LMS integrations desired? These require explicit approval and are not assumed.
+
+## Data Model and API Design (Exercise 3.3)
+
+### Task data model
+
+| Field | Purpose | Example |
+|---|---|---|
+| `id` | Unique task identifier | `"task-7f3a"` |
+| `title` | Task name | `"Submit lab report"` |
+| `description` | Additional details | `"Complete the results section and references."` |
+| `priority` | Importance of the task; allowed values and default require agreement | `"medium"` |
+| `status` | Completion state; exact representation requires agreement | `"incomplete"` |
+| `due_date` | Target date; date-only versus date-time behavior requires agreement | `"2025-04-18"` |
+
+### API design
+
+Use a `tasks` resource with JSON request and response bodies. The API supports the required create, view, update, and delete operations:
+
+| Method and path | Purpose | Example |
+|---|---|---|
+| `POST /tasks` | Create a task | Request body: `{ "title": "Submit lab report", "description": "Complete the results section.", "priority": "medium", "status": "incomplete", "due_date": "2025-04-18" }`; return the created task, including its `id`. |
+| `GET /tasks` | List tasks | Return an array of task objects; an empty collection returns `[]`. |
+| `GET /tasks/{id}` | View task details | `GET /tasks/task-7f3a` returns that task. |
+| `PUT /tasks/{id}` | Update task fields | Send the updated task fields; return the saved task. |
+| `DELETE /tasks/{id}` | Delete a task | `DELETE /tasks/task-7f3a`; report success or failure. |
+
+Validation rules, priority options, status representation, date semantics, and error response details remain subject to stakeholder agreement.
+
+## Design Review (Exercise 3.4)
+
+### Review findings
+
+- **Testability:** The CRUD acceptance criteria are generally testable, including success, validation failure, empty-list, cancellation, and delete-failure cases. However, several requirements are not yet objectively verifiable: NFR-01 uses “understandable,” NFR-02 does not define how to detect partial updates, and NFR-03, NFR-04, NFR-05, and NFR-06 lack measurable targets or agreed conditions. FR-01 and FR-03 depend on validation rules that have not been decided; FR-05 needs agreed persistence and retention expectations. Finalize these details and define measurable acceptance tests before implementation.
+- **Data model:** Each listed field has a stated purpose. Clarify whether `status` is the same as “completion status” throughout the requirements and stories, and agree on its representation and allowed values. Specify identifier generation and whether an ownership field is needed if the application is multi-student; authentication and ownership are intentionally undecided.
+- **API alignment:** `POST`, collection and item `GET`, `PUT`, and `DELETE` map to task creation, viewing, updating, and deletion. Define whether `PUT` requires a complete task representation, and specify success and error responses (including validation failures and unavailable IDs) so the API can be tested consistently.
+- **Invalid or missing data:** The criteria require rejecting invalid or missing values without creating or altering a task, and edge cases identify likely inputs. The actual required fields, limits, formats, priority/status values, and date rules remain open, so validation behavior is not yet fully testable. Agree on these rules and define how API and interface errors identify the issue.
+- **Scope:** No unjustified feature is specified. Sharing, reminders, recurrence, sorting, search, and integrations are explicitly excluded or pending approval. Treat concurrent edits and large lists in the edge-case list as review considerations, not committed features or performance requirements, until stakeholders approve them.
+
+### Cleanup
+
+The final question in “Unanswered questions” about sharing, reminders, recurring tasks, and integrations is duplicated; retain it once.
+
+## Generate the Python project structure
+
+Run these commands in PowerShell from the directory where you want the project created:
+
+```powershell
+$root = "student-task-manager"
+New-Item -ItemType Directory -Force -Path "$root/app", "$root/tests" | Out-Null
+New-Item -ItemType File -Force -Path `
+	"$root/app/main.py", `
+	"$root/app/models.py", `
+	"$root/app/database.py", `
+	"$root/requirements.txt", `
+	"$root/README.md", `
+	"$root/.gitignore" | Out-Null
+```
+
+This creates:
+
+```text
+student-task-manager/
+├── app/
+│   ├── main.py
+│   ├── models.py
+│   └── database.py
+├── tests/
+├── requirements.txt
+├── README.md
+└── .gitignore
+```

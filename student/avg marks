@@ -1,0 +1,103 @@
+import math
+
+PROMPT_TEMPLATE = """Task: Write a Python function named calculate_average(marks) that calculates the arithmetic mean of a list of student marks.
+
+Requirements:
+1. Reject an empty list with ValueError("marks cannot be empty").
+2. Reject any value that is not a real number (int/float) with ValueError("all marks must be numbers").
+3. Reject any mark outside the range 0 to 100 with ValueError("all marks must be in the range 0 to 100").
+4. Do not change the original list; only read from it.
+5. Return the average as a floating-point value.
+
+Example valid inputs:
+- [80, 90, 100] -> 90.0
+- [0, 100] -> 50.0
+
+Example invalid inputs:
+- []
+- [-1, 80, 90]
+- [50, 101]
+- [50, 'A']
+- [50, None]
+"""
+
+
+def calculate_average(marks):
+    """
+    Return the arithmetic mean of a list of marks.
+
+    Validation rules:
+    - Empty list is rejected.
+    - Any value outside 0..100 is rejected.
+    - Non-numeric values are rejected.
+    - Boolean values are rejected because bool is not a valid student mark.
+    - The original list is preserved because we only read from it.
+    """
+    if marks is None or len(marks) == 0:
+        raise ValueError("marks cannot be empty")
+
+    if any(isinstance(mark, bool) or not isinstance(mark, (int, float)) for mark in marks):
+        raise ValueError("all marks must be numbers")
+
+    if any(mark < 0 or mark > 100 for mark in marks):
+        raise ValueError("all marks must be in the range 0 to 100")
+
+    return sum(marks) / len(marks)
+
+
+def run_validation_tests():
+    """Run assertions to prove the function behaves correctly for valid and invalid inputs."""
+    valid_cases = [
+        ([80, 90, 100], 90.0),
+        ([70, 75, 85, 90], 80.0),
+        ([0, 0, 100], 100 / 3),
+        ([100, 100, 100], 100.0),
+        ([0, 100], 50.0),
+    ]
+
+    for marks, expected in valid_cases:
+        result = calculate_average(marks)
+        assert math.isclose(result, expected, rel_tol=1e-9, abs_tol=1e-9), (
+            f"Expected {expected} for {marks}, got {result}"
+        )
+
+    invalid_cases = [
+        [],
+        [-1, 80, 90],
+        [50, 101],
+        [50, "A"],
+        [50, None],
+        [50, True],
+    ]
+
+    for case in invalid_cases:
+        try:
+            calculate_average(case)
+            raise AssertionError(f"ValueError was expected for invalid input: {case}")
+        except ValueError:
+            pass
+
+    original_marks = [70, 80, 90]
+    result = calculate_average(original_marks)
+    assert original_marks == [70, 80, 90], "Input list was modified"
+    assert math.isclose(result, 80.0, rel_tol=1e-9, abs_tol=1e-9), "Average is incorrect"
+
+    print("VALIDATION EVIDENCE")
+    print("--------------------------------")
+    print(f"Prompt template: {PROMPT_TEMPLATE.strip()}")
+    print("--------------------------------")
+    for marks, expected in valid_cases:
+        print(f"calculate_average({marks}) = {calculate_average(marks)}  expected {expected}")
+    print("--------------------------------")
+    for case in invalid_cases:
+        try:
+            calculate_average(case)
+        except ValueError as exc:
+            print(f"{case} -> ValueError: {exc}")
+    print("--------------------------------")
+    print(f"Original list preserved: {original_marks} -> result {result}")
+    print("All validation checks passed.")
+
+
+# Run the validation evidence when the script is executed.
+run_validation_tests()
