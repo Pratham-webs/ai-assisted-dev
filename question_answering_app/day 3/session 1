@@ -1,0 +1,80 @@
+from collections.abc import Iterable
+from numbers import Real
+import unittest
+
+
+def calculate_average(marks):
+    """Return the mean of marks, requiring real numeric values in [0, 100].
+
+    Root causes fixed: empty input previously reached division by zero; invalid
+    types failed unpredictably while summing; out-of-range values were silently
+    included. Materializing into a new list validates generators as well as lists
+    without modifying the caller's original list.
+    """
+    if not isinstance(marks, Iterable):
+        raise TypeError("marks must be an iterable of numbers")
+
+    values = list(marks)
+    if not values:
+        raise ValueError("marks must not be empty")
+
+    for mark in values:
+        if isinstance(mark, bool) or not isinstance(mark, Real):
+            raise TypeError("each mark must be a real number")
+        # NaN also fails this range test, since comparisons with NaN are false.
+        if not 0 <= mark <= 100:
+            raise ValueError("each mark must be between 0 and 100")
+
+    return sum(values) / len(values)
+
+
+class CalculateAverageTests(unittest.TestCase):
+    def test_valid_marks(self):
+        self.assertEqual(calculate_average([10, 20, 30,40, 50]), 30)
+
+    def test_single_valid_mark(self):
+        self.assertEqual(calculate_average([42]), 42)
+
+    def test_boundary_marks(self):
+        self.assertEqual(calculate_average([0, 100]), 50)
+
+    def test_empty_input(self):
+        # Original defect: division by zero when len(marks) was zero.
+        with self.assertRaisesRegex(ValueError, "must not be empty"):
+            calculate_average([])
+
+    def test_mark_below_zero(self):
+        with self.assertRaisesRegex(ValueError, "between 0 and 100"):
+            calculate_average([-1])
+
+    def test_mark_above_100(self):
+        with self.assertRaisesRegex(ValueError, "between 0 and 100"):
+            calculate_average([101])
+
+    def test_invalid_mark_type(self):
+        # Original defect: incompatible values failed unpredictably in addition.
+        with self.assertRaisesRegex(TypeError, "real number"):
+            calculate_average([50, "not a mark"])
+
+    def test_non_iterable_input(self):
+        with self.assertRaisesRegex(TypeError, "iterable"):
+            calculate_average(None)
+
+    def test_original_list_is_preserved(self):
+        marks = [25, 75]
+        original = marks.copy()
+        self.assertEqual(calculate_average(marks), 50)
+        self.assertEqual(marks, original)
+
+    def test_generator_input(self):
+        self.assertEqual(calculate_average(mark for mark in (20, 40)), 30)
+
+
+if __name__ == "__main__":
+    entered_marks = input("Enter marks separated by spaces or commas: ")
+    try:
+        marks = [float(value) for value in entered_marks.replace(",", " ").split()]
+        print("Average marks:", calculate_average(marks))
+    except (TypeError, ValueError) as error:
+        print("Invalid marks:", error)
+    unittest.main()

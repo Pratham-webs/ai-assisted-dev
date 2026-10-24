@@ -6,13 +6,24 @@ from datetime import date
 
 
 PRIORITIES = ("low", "medium", "high")
+TASK_TABLE_SQL = """
+    CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT,
+        due_date TEXT,
+        course TEXT,
+        priority TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+"""
 
 
 def validate_task(title, description, due_date, course, priority):
-    title = title.strip()
-    if not title:
+    normalized_title = title.strip()
+    if not normalized_title:
         raise ValueError("title is required")
-    if len(title) > 200:
+    if len(normalized_title) > 200:
         raise ValueError("title must be 200 characters or fewer")
 
     if description is not None and len(description) > 2000:
@@ -25,48 +36,47 @@ def validate_task(title, description, due_date, course, priority):
             raise ValueError("due date must use YYYY-MM-DD format") from exc
         if parsed_due_date.isoformat() != due_date:
             raise ValueError("due date must use YYYY-MM-DD format")
+        normalized_due_date = due_date
     else:
-        due_date = None
+        normalized_due_date = None
 
-    course = course.strip() if course else None
-    if course and len(course) > 100:
+    normalized_course = course.strip() if course else None
+    if normalized_course and len(normalized_course) > 100:
         raise ValueError("course must be 100 characters or fewer")
 
-    priority = priority.lower()
-    if priority not in PRIORITIES:
+    normalized_priority = priority.lower()
+    if normalized_priority not in PRIORITIES:
         raise ValueError(f"priority must be one of: {', '.join(PRIORITIES)}")
 
-    return title, description, due_date, course, priority
+    return normalized_title, description, normalized_due_date, normalized_course, normalized_priority
+
+
+def ensure_tasks_table(connection):
+    connection.execute(TASK_TABLE_SQL)
 
 
 def create_task(database, title, description=None, due_date=None, course=None, priority="medium"):
-    title, description, due_date, course, priority = validate_task(
+    normalized_title, normalized_description, normalized_due_date, normalized_course, normalized_priority = validate_task(
         title, description, due_date, course, priority
     )
 
     with closing(sqlite3.connect(database)) as connection:
         with connection:
-            connection.execute(
-                """
-                CREATE TABLE IF NOT EXISTS tasks (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT NOT NULL,
-                    description TEXT,
-                    due_date TEXT,
-                    course TEXT,
-                    priority TEXT NOT NULL,
-                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-                )
-                """
-            )
-            cursor = connection.execute(
+            ensure_tasks_table(connection)
+            task_cursor = connection.execute(
                 """
                 INSERT INTO tasks (title, description, due_date, course, priority)
                 VALUES (?, ?, ?, ?, ?)
                 """,
-                (title, description, due_date, course, priority),
+                (
+                    normalized_title,
+                    normalized_description,
+                    normalized_due_date,
+                    normalized_course,
+                    normalized_priority,
+                ),
             )
-            task_id = cursor.lastrowid
+            task_id = task_cursor.lastrowid
 
     return task_id
 
@@ -74,19 +84,7 @@ def create_task(database, title, description=None, due_date=None, course=None, p
 def list_tasks(database):
     with closing(sqlite3.connect(database)) as connection:
         with connection:
-            connection.execute(
-                """
-                CREATE TABLE IF NOT EXISTS tasks (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT NOT NULL,
-                    description TEXT,
-                    due_date TEXT,
-                    course TEXT,
-                    priority TEXT NOT NULL,
-                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-                )
-                """
-            )
+            ensure_tasks_table(connection)
             return connection.execute(
                 """
                 SELECT id, title, description, due_date, course, priority

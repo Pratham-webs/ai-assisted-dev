@@ -1,0 +1,11 @@
+def calculate_avg(marks):
+    total = 0
+    for mark in marks:
+        total += mark
+    return total / len(marks)
+
+def calculate_average(marks):
+    total = 0
+    for mark in marks:
+        total += mark
+    return total / len(marks)

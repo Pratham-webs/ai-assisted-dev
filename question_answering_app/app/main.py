@@ -4,9 +4,11 @@ from app.services.gemini_service import GeminiService, ServiceError
 
 st.set_page_config(page_title="AI Q&A System", page_icon="💬", layout="centered")
 
+
 @st.cache_resource(show_spinner=False)
 def get_service():
     return GeminiService(Settings.load())
+
 
 def main():
     if "messages" not in st.session_state:
@@ -41,13 +43,14 @@ def main():
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
+            with st.spinner("Think"):
                 try:
                     response = service.generate_answer(st.session_state.messages)
                     st.markdown(response)
                     st.session_state.messages.append({"role": "assistant", "content": response})
                 except ServiceError as err:
                     st.error(str(err))
+
 
 if __name__ == "__main__":
     main()
